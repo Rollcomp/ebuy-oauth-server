@@ -1,0 +1,18 @@
+language: java
+
+jdk:
+  - oraclejdk8
+dist: trusty
+
+deploy:
+  provider: heroku
+  api-key: $HEROKU_API_KEY
+  app: ebuy-oauth-server
+  on: master
+
+before_install:
+  - chmod +x mvnw
+
+install: true
+
+script: mvn clean package -DskipTests=true

@@ -3,15 +3,24 @@ server:
 
 spring:
   application:
-    name: oauth-server
+    name: ebuy-oauth-server
   data:
     mongodb:
       uri: mongodb+srv://ebuy-authdb-admin:rWdH79xYfj2aVODx@ebuy-auth-cluster-mivhj.mongodb.net/test
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: rocket-01.srvs.cloudkafka.com:9094,rocket-02.srvs.cloudkafka.com:9094,rocket-03.srvs.cloudkafka.com:9094
+    properties:
+      security:
+        protocol: SASL_SSL
+      sasl:
+        mechanism: SCRAM-SHA-256
+        jaas:
+          config: org.apache.kafka.common.security.scram.ScramLoginModule required username='xha6ilg6' password='1MA15i4ysm1Rl-Nnwd1SlS2kgDUtFFOt';
+        linger:
+          ms: 100
     topic:
-      userRegistered: USER_REGISTERED_TOPIC
-      userPassword: USER_PASSWORD_TOPIC
+      userRegistered: xha6ilg6-useregister
+      userPassword: xha6ilg6-userpassword
 
 logging:
   level:
@@ -20,7 +29,7 @@ logging:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: https://ebuy-registry-service.herokuapp.com/eureka
     register-with-eureka: true
     fetch-registry: true
     healthcheck:

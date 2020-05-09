@@ -23,11 +23,9 @@ public class Sender {
     private KafkaTemplate<String, MailDto> kafkaTemplate;
 
     public void sendMail(MailDto mailDto, String topic) {
-        Message<MailDto> message = MessageBuilder.withPayload(mailDto).setHeader(KafkaHeaders.TOPIC, topic).build();
-        LOGGER.debug("sended message" + message);
-        LOGGER.debug("message payload" + message.getPayload().toString());
-        LOGGER.debug("message header" + message.getHeaders().toString());
-        kafkaTemplate.send(message);
+        LOGGER.debug("message sent with mail to kafka: " + mailDto.getEmail());
+        LOGGER.debug("message sent to topic: " + topic);
+        kafkaTemplate.send(topic,mailDto);
     }
 
 }

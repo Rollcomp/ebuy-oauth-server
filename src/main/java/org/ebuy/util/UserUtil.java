@@ -15,7 +15,8 @@ public class UserUtil {
     private UserRepository userRepository;
 
     public boolean isEmailExist(String email) {
-        if (userRepository.findByEmailIgnoreCase(email) != null) {
+
+        if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
             throw new UserExistException("User is already registered " + email);
         }
         return false;
