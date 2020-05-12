@@ -14,7 +14,6 @@ import java.util.Set;
 public class UserDto {
 
     private String email;
-
     private String password;
 
     public UserDto(String email, String password, boolean enabled, Set<Authority> authorities) {

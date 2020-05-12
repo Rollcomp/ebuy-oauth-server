@@ -18,9 +18,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 public class UserRegisterController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
+    @Autowired
+    public UserRegisterController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping("/registerUser")
     public Message<String> registerUser(@RequestBody UserDto userDto) {
@@ -33,8 +36,8 @@ public class UserRegisterController {
     }
 
     @PostMapping("/resetPassword")
-    public Message<String> sendPasswordResetMail(@RequestBody String userEmail) throws UserExistException {
-        return userService.resetUserPassword(userEmail);
+    public Message<String> sendPasswordResetMail(@RequestParam String email) throws UserExistException {
+        return userService.resetUserPassword(email);
     }
 
     @PostMapping("/resetPasswordSet")
