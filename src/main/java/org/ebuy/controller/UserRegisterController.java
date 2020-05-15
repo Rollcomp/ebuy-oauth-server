@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
  */
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/auth")
 public class UserRegisterController {
 
     private final UserService userService;
@@ -25,27 +25,27 @@ public class UserRegisterController {
         this.userService = userService;
     }
 
-    @PostMapping("/registerUser")
+    @PostMapping("/register")
     public Message<String> registerUser(@RequestBody UserDto userDto) {
         return userService.registerNewUserAccount(userDto);
     }
 
-    @PostMapping("/confirmUser")
+    @PostMapping("/confirm")
     public Message<String> confirmUserAccount(@RequestParam("t") String confirmationToken) {
         return userService.confirmUserAccount(confirmationToken);
     }
 
-    @PostMapping("/resetPassword")
+    @PostMapping("/reset-password")
     public Message<String> sendPasswordResetMail(@RequestParam String email) throws UserExistException {
         return userService.resetUserPassword(email);
     }
 
-    @PostMapping("/resetPasswordSet")
+    @PostMapping("/reset-password-confirm")
     public Message<String> resetUserPassword(@RequestParam("token") String token, @RequestBody ResetPasswordDto passwordDto) throws PasswordNotMatchingException {
         return userService.confirmUserResetPassword(token, passwordDto);
     }
 
-    @PostMapping("/changePassword")
+    @PostMapping("/change-password")
     public Message<String> changeUserPassword(@RequestBody ChangePasswordDto changePasswordDto) throws PasswordNotMatchingException {
         return userService.changeUserPassword(changePasswordDto);
     }

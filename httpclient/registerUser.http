@@ -1,0 +1,9 @@
+POST http://localhost:8082/api/registerUser
+Content-Type: application/json
+
+{
+  "email" : "ozgurustun65@gmail.com",
+  "password" : "123456"
+}
+
+###
