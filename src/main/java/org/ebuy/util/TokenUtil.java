@@ -1,6 +1,6 @@
 package org.ebuy.util;
 
-import org.ebuy.model.user.User;
+import org.ebuy.entity.User;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -14,7 +14,7 @@ public class TokenUtil {
 
     private static final int expiryPeriod = 60 * 60 * 24;
 
-    public boolean isValidConfirmationToken(User user) {
+    public boolean isValidActivationKey(User user) {
         LocalDateTime confirmationTime = LocalDateTime.now();
         LocalDateTime registeredTime = user.getActivationKeycreatedTime();
         Duration duration = Duration.between(confirmationTime, registeredTime);
@@ -27,7 +27,7 @@ public class TokenUtil {
         }
     }
 
-    public boolean isValidPasswordResetToken(User user) {
+    public boolean isValidresetPasswordKey(User user) {
         LocalDateTime passwordResetRequestTime = LocalDateTime.now();
         LocalDateTime registeredTime = user.getResetPasswordKeycreatedTime();
         Duration duration = Duration.between(passwordResetRequestTime, registeredTime);

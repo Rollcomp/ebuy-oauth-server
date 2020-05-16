@@ -1,4 +1,4 @@
-package org.ebuy.dto;
+package org.ebuy.model.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,17 +13,14 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class ChangePasswordDto {
-    @NotNull
-    @NotEmpty
-    private String userEmail;
-
-    @NotNull
-    @NotEmpty
-    private String oldPassword;
+public class ResetPasswordRequest {
 
     @NotNull
     @NotEmpty
     private String newPassword;
+
+    @NotNull
+    @NotEmpty
+    private String newPasswordAgain;
 
 }

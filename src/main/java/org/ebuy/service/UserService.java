@@ -1,24 +1,26 @@
 package org.ebuy.service;
 
-import org.ebuy.constant.Authority;
-import org.ebuy.dto.ChangePasswordDto;
-import org.ebuy.dto.MailDto;
-import org.ebuy.dto.ResetPasswordDto;
-import org.ebuy.dto.UserDto;
-import org.ebuy.exception.TokenNotValidException;
+import lombok.extern.slf4j.Slf4j;
+import org.ebuy.model.Authority;
+import org.ebuy.model.TokenMail;
 import org.ebuy.exception.PasswordNotMatchingException;
+import org.ebuy.exception.TokenNotValidException;
 import org.ebuy.exception.UserExistException;
 import org.ebuy.kafka.Sender;
-import org.ebuy.model.user.User;
+import org.ebuy.mapper.UserMapper;
+import org.ebuy.model.request.ChangePasswordRequest;
+import org.ebuy.model.request.ResetPasswordRequest;
+import org.ebuy.entity.User;
+import org.ebuy.model.request.UserRegisterRequest;
 import org.ebuy.repository.UserRepository;
 import org.ebuy.util.TokenUtil;
 import org.ebuy.util.UserUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
@@ -32,6 +34,7 @@ import java.util.UUID;
  */
 
 @Service
+@Slf4j
 public class UserService {
 
     @Value("${spring.kafka.topic.userRegistered}")
@@ -40,20 +43,22 @@ public class UserService {
     @Value("${spring.kafka.topic.userPassword}")
     private String resetPasswordTopic;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final Sender sender;
+    private final UserUtil userUtil;
+    private final TokenUtil tokenUtil;
+    private final UserMapper userMapper;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private Sender sender;
-
-    @Autowired
-    private UserUtil userUtil;
-
-    @Autowired
-    private TokenUtil tokenUtil;
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, Sender sender, UserUtil userUtil, TokenUtil tokenUtil, UserMapper userMapper) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.sender = sender;
+        this.userUtil = userUtil;
+        this.tokenUtil = tokenUtil;
+        this.userMapper = userMapper;
+    }
 
     private void saveRegisteredUser(User user) {
         userRepository.save(user);
@@ -67,52 +72,72 @@ public class UserService {
         return user.get();
     }
 
-    public Message<String> registerNewUserAccount(UserDto userDto) {
-        //Check user already registered or not? If it is, throws UserExistsException
-        userUtil.isEmailExist(userDto.getEmail());
-        //TODO:Mapper will be added to dto-entity transform
-        User registeredUser = new User();
-        registeredUser.setEmail(userDto.getEmail());
-        registeredUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
+    public User registerNewUserAccount(UserRegisterRequest userRegisterRequest) {
+
+        //Check whether user exist
+        userUtil.isEmailExist(userRegisterRequest.getEmail());
+
+        User registeredUser = userMapper.userRegReqToUser(userRegisterRequest);
+        registeredUser.setPassword(passwordEncoder.encode(userRegisterRequest.getPassword()));
         registeredUser.setEnabled(false);
         registeredUser.setAuthorities(new HashSet<Authority>(Collections.singleton(Authority.REGISTERED_USER)));
         registeredUser.setActivationKey(UUID.randomUUID().toString());
         registeredUser.setActivationKeycreatedTime(LocalDateTime.now());
-        userRepository.save(registeredUser);
-        MailDto mailDto = new MailDto(registeredUser.getEmail(), registeredUser.getActivationKey());
 
-        sender.sendMail(mailDto, registerUserTopic);
-        userRepository.save(registeredUser);
+        TokenMail tokenMail = new TokenMail(registeredUser.getEmail(), registeredUser.getActivationKey());
+        sender.sendMail(tokenMail, registerUserTopic).addCallback(new ListenableFutureCallback<SendResult<String, TokenMail>>() {
+            @Override
+            public void onFailure(Throwable ex) {
+                log.debug("New User Register Message has not been sent to kafka with email: " + tokenMail.getEmail());
+            }
 
-        return MessageBuilder.withPayload("User is registered").setHeader("userId", registeredUser.getId()).build();
+            @Override
+            public void onSuccess(SendResult<String, TokenMail> result) {
+                log.debug("New User Register Message has been sent to kafka with mail: " + tokenMail.getEmail());
+                userRepository.save(registeredUser);
+            }
+        });
 
+        return registeredUser;
     }
 
-    public Message<String> confirmUserAccount(String confirmationToken) {
-        Optional<User> user = userRepository.findByActivationKey(confirmationToken);
+    public User confirmUserAccount(String activationKey) {
+        Optional<User> user = userRepository.findByActivationKey(activationKey);
 
-        if (!user.isPresent() || !tokenUtil.isValidConfirmationToken(user.get())) {
+        if (!user.isPresent() || !tokenUtil.isValidActivationKey(user.get())) {
             throw new TokenNotValidException("Token is not valid!");
         }
-            user.get().setEnabled(true);
-            saveRegisteredUser(user.get());
-            return MessageBuilder.withPayload("User account has confirmed").setHeader("userId", user.get().getId()).build();
+        user.get().setEnabled(true);
+        saveRegisteredUser(user.get());
+        return user.get();
     }
 
-    public Message<String> resetUserPassword(String userEmail) {
+    public User resetUserPassword(String userEmail) {
 
         User user = findUserByEmail(userEmail);
         user.setResetPasswordKey(UUID.randomUUID().toString());
         user.setResetPasswordKeycreatedTime(LocalDateTime.now());
-        userRepository.save(user);
-        MailDto mailDto = new MailDto(userEmail,user.getResetPasswordKey());
-        sender.sendMail(mailDto,resetPasswordTopic);
-        return MessageBuilder.withPayload("Password reset mail has been sent").setHeader("userId", user.getId()).build();
+
+        TokenMail tokenMail = new TokenMail(user.getEmail(), user.getResetPasswordKey());
+        sender.sendMail(tokenMail, resetPasswordTopic).addCallback(new ListenableFutureCallback<SendResult<String, TokenMail>>() {
+            @Override
+            public void onFailure(Throwable ex) {
+                log.debug("Password Reset Message has not been sent to kafka with email: " + tokenMail.getEmail());
+            }
+
+            @Override
+            public void onSuccess(SendResult<String, TokenMail> result) {
+                log.debug("Password Reset Message has been sent to kafka with mail: " + tokenMail.getEmail());
+                userRepository.save(user);
+            }
+        });
+
+        return user;
     }
 
-    public Message<String> confirmUserResetPassword(String resetPasswordToken, ResetPasswordDto passwordDto) throws PasswordNotMatchingException {
+    public User confirmUserResetPassword(String resetPasswordToken, ResetPasswordRequest passwordDto) throws PasswordNotMatchingException {
         Optional<User> user = userRepository.findByResetPasswordKey(resetPasswordToken);
-        if(!user.isPresent() || !tokenUtil.isValidPasswordResetToken(user.get())){
+        if (!user.isPresent() || !tokenUtil.isValidresetPasswordKey(user.get())) {
             throw new TokenNotValidException("Token is not valid!");
         }
         if (!passwordDto.getNewPassword().equals(passwordDto.getNewPasswordAgain())) {
@@ -120,17 +145,17 @@ public class UserService {
         }
         user.get().setPassword(passwordEncoder.encode(passwordDto.getNewPassword()));
         userRepository.save(user.get());
-        return MessageBuilder.withPayload("User password has resetted").setHeader("userId", user.get().getId()).build();
+        return user.get();
     }
 
-    public Message<String> changeUserPassword(@RequestBody ChangePasswordDto changePasswordDto) throws PasswordNotMatchingException {
+    public User changeUserPassword(@RequestBody ChangePasswordRequest changePasswordRequest) throws PasswordNotMatchingException {
         //TODO: User should be logged in to change password. Control will be added
-        User user = findUserByEmail(changePasswordDto.getUserEmail());
-        if(!passwordEncoder.matches(changePasswordDto.getOldPassword(), user.getPassword())){
+        User user = findUserByEmail(changePasswordRequest.getUserEmail());
+        if (!passwordEncoder.matches(changePasswordRequest.getOldPassword(), user.getPassword())) {
             throw new PasswordNotMatchingException("Old password and new password not matching!");
         }
-        user.setPassword(passwordEncoder.encode(changePasswordDto.getNewPassword()));
+        user.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
         userRepository.save(user);
-        return MessageBuilder.withPayload("User password has changed").setHeader("userId", user.getId()).build();
+        return user;
     }
 }

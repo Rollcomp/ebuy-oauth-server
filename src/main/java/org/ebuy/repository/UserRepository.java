@@ -1,6 +1,6 @@
 package org.ebuy.repository;
 
-import org.ebuy.model.user.User;
+import org.ebuy.entity.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

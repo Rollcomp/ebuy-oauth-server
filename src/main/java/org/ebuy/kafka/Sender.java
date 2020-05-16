@@ -1,31 +1,30 @@
 package org.ebuy.kafka;
 
-import org.ebuy.dto.MailDto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.ebuy.model.TokenMail;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
+import org.springframework.util.concurrent.ListenableFuture;
 
 /**
  * Created by Ozgur Ustun on May, 2020
  */
 @Service
+@Slf4j
 public class Sender {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Sender.class);
+    private final KafkaTemplate<String, TokenMail> kafkaTemplate;
 
     @Autowired
-    private KafkaTemplate<String, MailDto> kafkaTemplate;
+    public Sender(KafkaTemplate<String, TokenMail> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
-    public void sendMail(MailDto mailDto, String topic) {
-        LOGGER.debug("message sent with mail to kafka: " + mailDto.getEmail());
-        LOGGER.debug("message sent to topic: " + topic);
-        kafkaTemplate.send(topic,mailDto);
+    public ListenableFuture<SendResult<String, TokenMail>> sendMail(TokenMail tokenMail, String topic) {
+        log.debug("message sent to topic: " + topic);
+        return kafkaTemplate.send(topic, tokenMail);
     }
 
 }
