@@ -1,4 +1,4 @@
-package org.ebuy.constant;
+package org.ebuy.model;
 
 /**
  * Created by Burak Köken on 22.4.2020.

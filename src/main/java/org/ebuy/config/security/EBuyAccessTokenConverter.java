@@ -1,6 +1,6 @@
 package org.ebuy.config.security;
 
-import org.ebuy.constant.EBuyJwtTokenClaim;
+import org.ebuy.model.EBuyJwtTokenClaim;
 import org.ebuy.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;

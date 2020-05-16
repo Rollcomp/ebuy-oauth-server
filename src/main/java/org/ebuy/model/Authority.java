@@ -1,4 +1,4 @@
-package org.ebuy.constant;
+package org.ebuy.model;
 
 import org.springframework.security.core.GrantedAuthority;
 

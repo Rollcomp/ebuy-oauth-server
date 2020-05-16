@@ -1,4 +1,4 @@
-package org.ebuy.model.client;
+package org.ebuy.entity;
 
 import org.ebuy.helper.HelperMethods;
 import org.springframework.data.annotation.Id;

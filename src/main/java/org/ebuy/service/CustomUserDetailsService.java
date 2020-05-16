@@ -1,6 +1,6 @@
 package org.ebuy.service;
 
-import org.ebuy.model.user.User;
+import org.ebuy.entity.User;
 import org.ebuy.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;

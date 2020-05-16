@@ -1,6 +1,6 @@
 package org.ebuy.repository;
 
-import org.ebuy.model.client.Client;
+import org.ebuy.entity.Client;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

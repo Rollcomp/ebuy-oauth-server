@@ -1,17 +1,17 @@
-package org.ebuy.dto;
+package org.ebuy.model;
 
 /**
  * Created by Ozgur Ustun on May, 2020
  */
-public class MailDto {
+public class TokenMail {
 
     private String email;
     private String token;
 
-    public MailDto() {
+    public TokenMail() {
     }
 
-    public MailDto(String email, String token) {
+    public TokenMail(String email, String token) {
         this.email = email;
         this.token = token;
     }

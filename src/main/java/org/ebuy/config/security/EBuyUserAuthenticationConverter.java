@@ -1,8 +1,8 @@
 package org.ebuy.config.security;
 
-import org.ebuy.constant.Authority;
-import org.ebuy.constant.EBuyJwtTokenClaim;
-import org.ebuy.model.user.User;
+import org.ebuy.model.Authority;
+import org.ebuy.model.EBuyJwtTokenClaim;
+import org.ebuy.entity.User;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;

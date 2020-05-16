@@ -1,6 +1,6 @@
-package org.ebuy.model.user;
+package org.ebuy.entity;
 
-import org.ebuy.constant.Authority;
+import org.ebuy.model.Authority;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;

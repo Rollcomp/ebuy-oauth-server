@@ -6,8 +6,7 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.ebuy.dto.MailDto;
-import org.ebuy.model.user.User;
+import org.ebuy.model.TokenMail;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +31,7 @@ public class SenderConfig  {
     private KafkaProperties kafkaProperties;
 
     @Bean
-    public ProducerFactory<String, MailDto> producerFactory() {
+    public ProducerFactory<String, TokenMail> producerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -44,7 +43,7 @@ public class SenderConfig  {
     }
 
     @Bean
-    public KafkaTemplate<String, MailDto> kafkaTemplate() {
+    public KafkaTemplate<String, TokenMail> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 
